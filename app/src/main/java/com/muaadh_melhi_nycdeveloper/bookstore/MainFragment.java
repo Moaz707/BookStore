@@ -34,12 +34,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * A simple {@link Fragment} subclass.
  */
 public class MainFragment extends Fragment {
-private View rootview;
-private BookService bookService;
-private RecyclerView bookRecyclerView;
-private RecyclerView.LayoutManager manger;
-private final String TAG=MainFragment.class.getSimpleName();
+    private View rootview;
+    private BookService bookService;
+    private RecyclerView bookRecyclerView;
+    private RecyclerView.LayoutManager manger;
+    private final String TAG = MainFragment.class.getSimpleName();
     private List<Book> bookList;
+    BookAadpter bookAadpter;
 
     public MainFragment() {
         // Required empty public constructor
@@ -50,11 +51,11 @@ private final String TAG=MainFragment.class.getSimpleName();
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-         rootview=inflater.inflate(R.layout.fragment_main, container, false);
-         bookList=new ArrayList<>();
-         bookRecyclerView=rootview.findViewById(R.id.re);
-        manger=new LinearLayoutManager(getActivity());
-         return rootview;
+        rootview = inflater.inflate(R.layout.fragment_main, container, false);
+        bookList = new ArrayList<>();
+        bookRecyclerView = rootview.findViewById(R.id.re);
+        manger = new LinearLayoutManager(getActivity());
+        return rootview;
 
     }
 
@@ -73,8 +74,6 @@ private final String TAG=MainFragment.class.getSimpleName();
     }
 
 
-
-
     private void connectApi() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://raw.githubusercontent.com/")
@@ -82,24 +81,24 @@ private final String TAG=MainFragment.class.getSimpleName();
                 .build();
         bookService = retrofit.create(BookService.class);
 
-           Call<List<Book>> call=bookService.getBook();
-           call.enqueue(new Callback<List<Book>>() {
-               @Override
-               public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
-                  bookRecyclerView.setLayoutManager(manger);
-                  bookList=response.body();
-                  BookAadpter bookAadpter=new BookAadpter(response.body());
-                  bookRecyclerView.setAdapter(bookAadpter);
-                   Log.d(TAG, "onResponse: ------------------------");
-                   Log.d(TAG, "booklist " + response.body().get(1).getName());
-               }
+        Call<List<Book>> call = bookService.getBook();
+        call.enqueue(new Callback<List<Book>>() {
+            @Override
+            public void onResponse(Call<List<Book>> call, Response<List<Book>> response) {
+                bookRecyclerView.setLayoutManager(manger);
+                bookList = response.body();
+                 bookAadpter = new BookAadpter(response.body());
+                bookRecyclerView.setAdapter(bookAadpter);
+                Log.d(TAG, "onResponse: ------------------------");
+                Log.d(TAG, "booklist " + response.body().get(1).getName());
+            }
 
-               @Override
-               public void onFailure(Call<List<Book>> call, Throwable t) {
-                            t.printStackTrace();
-                            t.getMessage();
-               }
-           });
+            @Override
+            public void onFailure(Call<List<Book>> call, Throwable t) {
+                t.printStackTrace();
+                t.getMessage();
+            }
+        });
     }
 
     @Override
@@ -112,11 +111,31 @@ private final String TAG=MainFragment.class.getSimpleName();
                 Toast.makeText(getActivity(), "help clicked", Toast.LENGTH_SHORT).show();
                 return true;
             case R.id.sort:
+                sortItems(bookList);
                 Toast.makeText(getActivity(), "sort clicked", Toast.LENGTH_SHORT).show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void sortItems(List<Book> bookList) {
+        for (int i = 0; i < bookList.size() - 1; i++) {
+            int next = i;
+            for (int j = i + 1; j < bookList.size(); j++) {
+                if (bookList.get(j).getName().compareTo(bookList.get(next).getName()) < 0) {
+                    next = j;
+                }
+
+            }
+            Book book = bookList.get(next);
+            bookList.set(next, bookList.get(i));
+            bookList.set(i, book);
+
+
+        }
+        bookAadpter.notifyDataSetChanged();
+
     }
 
     @Override
